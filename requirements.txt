@@ -1,0 +1,10 @@
+streamlit>=1.35.0
+torch>=2.0.0
+torchvision>=0.15.0
+Pillow>=10.0.0
+numpy>=1.24.0
+opencv-python-headless>=4.8.0
+PyWavelets>=1.4.0
+reportlab>=4.0.0
+plotly>=5.18.0
+pandas>=2.0.0
