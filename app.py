@@ -240,6 +240,23 @@ code,pre{{
   background:{t["input_bg"]} !important; border:1px solid {t["input_border"]} !important;
   border-radius:10px !important; color:{t["text"]} !important;
 }}
+/* ── SELECTBOX DROPDOWN POPUP ──────────────────────────────────────────────── */
+[data-baseweb="popover"],
+[data-baseweb="popover"] [data-baseweb="menu"]{{
+  background:{t["input_bg"]} !important;
+  border:1px solid {t["input_border"]} !important;
+  border-radius:10px !important;
+}}
+[data-baseweb="popover"] [role="option"],
+[data-baseweb="popover"] li{{
+  background:{t["input_bg"]} !important;
+  color:{t["text"]} !important;
+}}
+[data-baseweb="popover"] [role="option"]:hover,
+[data-baseweb="popover"] [aria-selected="true"]{{
+  background:{t["badge_bg"]} !important;
+  color:{t["accent"]} !important;
+}}
 
 /* ── FILE UPLOADER ─────────────────────────────────────────────────────────── */
 [data-testid="stFileUploader"]{{
@@ -903,6 +920,11 @@ def detect_modality(g: np.ndarray) -> str:
 def _pc(): return T()["bg2"]   # plot background color
 def _tc(): return T()["text"]  # plot text color
 
+def _rgba(hex_col: str, opacity: float) -> str:
+    h = hex_col.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{opacity})"
+
 def gauge_chart(value: float) -> go.Figure:
     t = T()
     color = t["success"] if value>=.70 else (t["warning"] if value>=.50 else t["error"])
@@ -915,9 +937,9 @@ def gauge_chart(value: float) -> go.Figure:
             "bar":{"color":color,"thickness":.28},
             "bgcolor":t["bg2"],"bordercolor":t["border"],"borderwidth":1,
             "steps":[
-                {"range":[0,50],  "color":t["error"]+"18"},
-                {"range":[50,70], "color":t["warning"]+"18"},
-                {"range":[70,100],"color":t["success"]+"18"},
+                {"range":[0,50],  "color":_rgba(t["error"],   0.09)},
+                {"range":[50,70], "color":_rgba(t["warning"], 0.09)},
+                {"range":[70,100],"color":_rgba(t["success"], 0.09)},
             ],
             "threshold":{"line":{"color":color,"width":3},"value":value*100},
         },
@@ -1253,9 +1275,15 @@ def page_lab():
         img_512 = cv2.resize(img_float,(512,512))
         roi_r   = float(np.mean(mask))
 
-    if roi_r < 0.005 or roi_r > 0.75:
-        st.error(f"Segmentation unstable (ROI={roi_r:.1%}). Image may lack recognisable anatomy.")
-        return
+    if roi_r < 0.005 or roi_r > 0.95:
+        # Fallback: circular central ROI covering ~30% of image
+        h, w = mask.shape
+        cy, cx = h // 2, w // 2
+        r = int(min(h, w) * 0.31)
+        Y, X = np.ogrid[:h, :w]
+        mask = ((X - cx) ** 2 + (Y - cy) ** 2 <= r ** 2).astype(np.float32)
+        roi_r = float(np.mean(mask))
+        st.warning(f"⚠️ Segmentation coverage unusual — using default central ROI ({roi_r:.1%}).")
 
     # ── Grad-CAM ──────────────────────────────────────────────────────────────
     cam_rgb = None

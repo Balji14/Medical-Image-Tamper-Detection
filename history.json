@@ -1,1 +1,53 @@
-[]
+[
+  {
+    "timestamp": "2026-07-12 22:39:48",
+    "username": "B211088",
+    "filename": "MRI-pictures-of-the-brain-with-no-Tumor-Source-Navoneel-Chakrabarty-Brain-MRI-Images.jpg",
+    "verdict": "\u26a0\ufe0f SUSPICIOUS",
+    "similarity": 0.5,
+    "roi_ratio": 0.2991,
+    "metrics": {
+      "PSNR (dB)": 100.0,
+      "SSIM": 1.0,
+      "MSE": 0.0,
+      "NCC": 1.0,
+      "BER": 0.5,
+      "Hash Similarity": 0.5,
+      "ROI Coverage": 0.2991
+    }
+  },
+  {
+    "timestamp": "2026-07-12 22:38:02",
+    "username": "B211088",
+    "filename": "MRI-sample-images-A-Normal-MRI-B-MRI-with-acute-stroke-C-MRI-with-Alzheimer-disease-D.png",
+    "verdict": "\u26a0\ufe0f SUSPICIOUS",
+    "similarity": 0.5469,
+    "roi_ratio": 0.8904,
+    "metrics": {
+      "PSNR (dB)": 100.0,
+      "SSIM": 1.0,
+      "MSE": 0.0,
+      "NCC": 1.0,
+      "BER": 0.4531,
+      "Hash Similarity": 0.5469,
+      "ROI Coverage": 0.8904
+    }
+  },
+  {
+    "timestamp": "2026-07-12 22:35:36",
+    "username": "B211088",
+    "filename": "69b1216fc5bf238c2de3b9a8_Fig-1-pineal-tumour-in-a-woman.png",
+    "verdict": "\ud83d\udea8 TAMPERED",
+    "similarity": 0.4688,
+    "roi_ratio": 0.2991,
+    "metrics": {
+      "PSNR (dB)": 100.0,
+      "SSIM": 1.0,
+      "MSE": 0.0,
+      "NCC": 1.0,
+      "BER": 0.5312,
+      "Hash Similarity": 0.4688,
+      "ROI Coverage": 0.2991
+    }
+  }
+]
