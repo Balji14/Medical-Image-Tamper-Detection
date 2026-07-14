@@ -1,1 +1,5 @@
-full_model.pth
+users.json
+tempCodeRunnerFile.py
+__pycache__/
+*.pyc
+.streamlit/secrets.toml

@@ -1275,15 +1275,20 @@ def page_lab():
         img_512 = cv2.resize(img_float,(512,512))
         roi_r   = float(np.mean(mask))
 
-    if roi_r < 0.005 or roi_r > 0.95:
-        # Fallback: circular central ROI covering ~30% of image
-        h, w = mask.shape
-        cy, cx = h // 2, w // 2
-        r = int(min(h, w) * 0.31)
-        Y, X = np.ogrid[:h, :w]
-        mask = ((X - cx) ** 2 + (Y - cy) ** 2 <= r ** 2).astype(np.float32)
+    if roi_r < 0.02 or roi_r > 0.85:
+        # Fallback: intensity-based ROI (tissue is brighter than background),
+        # mirrors the percentile-threshold masks used to train the segmenter
+        img_u8 = (img_512 * 255).astype(np.uint8)
+        _, otsu = cv2.threshold(img_u8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        otsu = cv2.morphologyEx(otsu, cv2.MORPH_OPEN,  np.ones((5, 5), np.uint8))
+        otsu = cv2.morphologyEx(otsu, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+        n_labels, labels, stats, _ = cv2.connectedComponentsWithStats(otsu, connectivity=8)
+        if n_labels > 1:
+            largest = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+            otsu = (labels == largest).astype(np.uint8) * 255
+        mask = (otsu > 0).astype(np.float32)
         roi_r = float(np.mean(mask))
-        st.warning(f"⚠️ Segmentation coverage unusual — using default central ROI ({roi_r:.1%}).")
+        st.warning(f"⚠️ Segmentation coverage unusual — using intensity-based fallback ROI ({roi_r:.1%}).")
 
     # ── Grad-CAM ──────────────────────────────────────────────────────────────
     cam_rgb = None
