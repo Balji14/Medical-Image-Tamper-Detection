@@ -74,6 +74,19 @@ def T() -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 def inject_css():
     t = T()
+    sidebar_open = st.session_state.get("sidebar_open", True)
+    # When collapsed, hide the sidebar entirely via CSS (driven by our own
+    # session_state flag, not Streamlit's built-in control) and let the main
+    # content reclaim the freed-up width.
+    sidebar_hide_css = "" if sidebar_open else """
+[data-testid="stSidebar"]{
+  display:none !important;
+}
+[data-testid="stMain"],.main{
+  margin-left:0 !important;
+  max-width:100% !important;
+}
+"""
     st.markdown(f"""
 <style>
 /* ── GOOGLE FONT ─────────────────────────────────────────────────────────── */
@@ -152,6 +165,50 @@ code,pre{{
   background:{t["badge_bg"]} !important; color:{t["accent"]} !important;
   transform:none !important; filter:none !important;
 }}
+
+/* ── PANEL TOGGLE (custom «/» control) ────────────────────────────────────────
+   Streamlit's own built-in sidebar collapse/expand icon can't be restyled
+   reliably (its colour is fixed by Streamlit itself and can vanish against
+   our custom backgrounds). We hide that native control completely and use
+   our own real, always-visible buttons instead ("« Hide" inside the sidebar,
+   "» Show" at the top of the main area) — these are styled below so they are
+   always black in light mode and always white in dark mode. */
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+[data-testid="stSidebarHeader"],
+[data-testid*="ollaps"],
+button[aria-label*="sidebar" i],
+button[title*="sidebar" i]{{
+  display:none !important;
+}}
+{sidebar_hide_css}
+.st-key-collapse_sidebar_btn button,
+.st-key-expand_sidebar_btn button{{
+  background:{t["card"]} !important;
+  color:{t["text"]} !important;
+  border:1px solid {t["border"]} !important;
+  border-radius:8px !important;
+  font-weight:700 !important;
+  box-shadow:none !important;
+  padding:.4rem .9rem !important;
+}}
+.st-key-collapse_sidebar_btn button *,
+.st-key-expand_sidebar_btn button *{{
+  color:{t["text"]} !important;
+}}
+.st-key-collapse_sidebar_btn button:hover,
+.st-key-expand_sidebar_btn button:hover{{
+  background:{t["badge_bg"]} !important;
+  border-color:{t["accent"]} !important;
+  color:{t["accent"]} !important;
+  transform:none !important;
+}}
+.st-key-collapse_sidebar_btn button:hover *,
+.st-key-expand_sidebar_btn button:hover *{{
+  color:{t["accent"]} !important;
+}}
+.st-key-collapse_sidebar_btn{{margin-bottom:.75rem !important;}}
+.st-key-expand_sidebar_btn{{margin-bottom:1rem !important;}}
 
 /* ── BUTTONS ──────────────────────────────────────────────────────────────── */
 .stButton>button,.stFormSubmitButton>button{{
@@ -268,6 +325,31 @@ code,pre{{
   border-color:{t["accent"]}80 !important; background:{t["badge_bg"]} !important;
 }}
 [data-testid="stFileUploaderDropzoneInstructions"] span{{color:{t["muted"]} !important;}}
+
+/* Uploaded file row (shows after a file is picked): filename, size, icons.
+   Previously unstyled — it used Streamlit's default colour, which happened
+   to look fine on the dark theme by coincidence but was invisible
+   (same colour as the background) in light mode. */
+[data-testid="stFileUploaderFile"]{{
+  background:{t["card"]} !important;
+  border:1px solid {t["border"]} !important;
+  border-radius:10px !important;
+}}
+[data-testid="stFileUploaderFile"] *,
+[data-testid="stFileUploaderFileName"],
+[data-testid="stFileUploader"] li,
+[data-testid="stFileUploader"] li *,
+[data-testid="stFileUploader"] small{{
+  color:{t["text"]} !important;
+}}
+[data-testid="stFileUploaderFile"] svg,
+[data-testid="stFileUploader"] li svg{{
+  fill:{t["muted"]} !important;
+}}
+[data-testid="stFileUploaderDeleteBtn"] button,
+[data-testid="stFileUploader"] button{{
+  color:{t["text"]} !important;
+}}
 
 /* ── ALERTS ────────────────────────────────────────────────────────────────── */
 [data-testid="stAlert"]{{border-radius:12px !important;border:1px solid !important;}}
@@ -1709,6 +1791,10 @@ def page_research():
 def render_sidebar():
     t = T()
     with st.sidebar:
+        if st.button("«  Hide", key="collapse_sidebar_btn", use_container_width=True):
+            st.session_state["sidebar_open"] = False
+            st.rerun()
+
         st.markdown(f"""
         <div class="sb-brand">
           <span class="sb-logo">🧬</span>
@@ -1775,6 +1861,7 @@ def main():
     st.session_state.setdefault("authenticated", False)
     st.session_state.setdefault("active_page",   "Home")
     st.session_state.setdefault("dark_mode",     True)
+    st.session_state.setdefault("sidebar_open",  True)
 
     inject_css()
 
@@ -1783,6 +1870,11 @@ def main():
         return
 
     render_sidebar()
+
+    if not st.session_state.get("sidebar_open", True):
+        if st.button("»  Show menu", key="expand_sidebar_btn"):
+            st.session_state["sidebar_open"] = True
+            st.rerun()
 
     page = st.session_state.get("active_page","Home")
     dispatch = {
